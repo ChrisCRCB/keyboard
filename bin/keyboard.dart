@@ -64,7 +64,7 @@ void main() {
           tolk.output('Goodbye.');
           break;
         } else {
-          tolk.output(id.toString());
+          throw StateError('Unhandled ID: $id.');
         }
       }
       TranslateMessage(messagePointer);
