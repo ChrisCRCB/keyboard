@@ -12,3 +12,5 @@ export 'src/keyboard/keyboard_mode.dart';
 export 'src/keyboard/navigation_keys.dart';
 
 export 'src/keyboard/number_keys.dart';
+
+export 'src/virtual_key_codes.dart';

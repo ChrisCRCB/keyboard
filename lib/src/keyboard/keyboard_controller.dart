@@ -5,11 +5,7 @@ import 'package:ffi/ffi.dart';
 import 'package:recase/recase.dart';
 import 'package:win32/win32.dart';
 
-import '../exceptions.dart';
-import 'keyboard_key.dart';
-import 'keyboard_mode.dart';
-import 'navigation_keys.dart';
-import 'number_keys.dart';
+import '../../keyboard.dart';
 
 const _baseId = 100;
 
@@ -38,7 +34,7 @@ class KeyboardController {
   }) {
     keys = [
       KeyboardKey(
-        vk: VK_DECIMAL,
+        vk: decimal,
         onActivate: () {
           final s = toBeTyped;
           if (s == null) {
@@ -49,24 +45,24 @@ class KeyboardController {
         },
       ),
       for (final vk in [
-        VK_NUMPAD0,
-        VK_NUMPAD1,
-        VK_NUMPAD2,
-        VK_NUMPAD3,
-        VK_NUMPAD4,
-        VK_NUMPAD5,
-        VK_NUMPAD6,
-        VK_NUMPAD7,
-        VK_NUMPAD8,
-        VK_NUMPAD9,
-        VK_ADD,
-        VK_SUBTRACT,
-        VK_RETURN,
+        numpad0,
+        numpad1,
+        numpad2,
+        numpad3,
+        numpad4,
+        numpad5,
+        numpad6,
+        numpad7,
+        numpad8,
+        numpad9,
+        add,
+        subtract,
+        return_,
       ])
         KeyboardKey(vk: vk, onActivate: _handleString),
-      KeyboardKey(vk: VK_DIVIDE, onActivate: () => throw QuitProgram()),
+      KeyboardKey(vk: divide, onActivate: () => throw QuitProgram()),
       KeyboardKey(
-        vk: VK_MULTIPLY,
+        vk: multiply,
         onActivate: () {
           final index = (mode.index + 1) % KeyboardMode.values.length;
           mode = KeyboardMode.values[index];
@@ -151,7 +147,7 @@ class KeyboardController {
   void handleKeyId(final int id) {
     final key = getKeyFromId(id);
     final vk = key.vk;
-    if (vk == VK_MULTIPLY || vk == VK_DIVIDE) {
+    if (vk == multiply || vk == divide) {
       key.onActivate();
       return;
     }
@@ -176,24 +172,44 @@ class KeyboardController {
         if (number == null) {
           errorBeep();
         } else {
-          pressKey(number.toString().codeUnits.single);
+          pressKey(number);
         }
         break;
     }
   }
 
   /// Press a key from [vk].
-  void pressKey(final int vk) {
-    final inputs = malloc.allocate<INPUT>(2);
-    inputs[0]
-      ..type = INPUT_KEYBOARD
-      ..ki.wVk = vk;
-    inputs[1]
-      ..type = INPUT_KEYBOARD
-      ..ki.wVk = vk
-      ..ki.dwFlags = KEYEVENTF_KEYUP;
-    SendInput(2, inputs, sizeOf<INPUT>());
-    malloc.free(inputs);
+  void pressKey(
+    final int vk, {
+    final bool control = false,
+    final bool shift = false,
+    final bool alt = false,
+    final bool windows = false,
+    final bool capsLock = false,
+  }) {
+    final modifiers = <int>[
+      if (control) lcontrol,
+      if (shift) lshift,
+      if (alt) lmenu,
+      if (windows) lwin,
+      if (capsLock) capital,
+    ];
+    final input = calloc<INPUT>();
+    final event = input.ref.ki;
+    for (final key in [...modifiers, vk]) {
+      event.wVk = key;
+      if (SendInput(1, input, sizeOf<INPUT>()) != 1) {
+        tolk.output('Problem pressing keys.');
+      }
+    }
+    event.dwFlags = KEYEVENTF_KEYUP;
+    for (final key in [vk, ...modifiers]) {
+      event.wVk = key;
+      if (SendInput(1, input, sizeOf<INPUT>()) != 1) {
+        tolk.output('Problem releasing keys.');
+      }
+    }
+    calloc.free(input);
   }
 
   /// Beep for an error.
