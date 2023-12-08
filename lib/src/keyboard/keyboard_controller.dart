@@ -1,8 +1,15 @@
+import 'dart:ffi';
+
 import 'package:dart_tolk/dart_tolk.dart';
+import 'package:ffi/ffi.dart';
 import 'package:recase/recase.dart';
 import 'package:win32/win32.dart';
 
-import '../../keyboard.dart';
+import '../exceptions.dart';
+import 'keyboard_key.dart';
+import 'keyboard_mode.dart';
+import 'navigation_keys.dart';
+import 'number_keys.dart';
 
 const _baseId = 100;
 
@@ -157,19 +164,13 @@ class KeyboardController {
         }
         break;
       case KeyboardMode.navigation:
-        if (vk == VK_NUMPAD2) {
-          pressKey(VK_DOWN);
-        } else if (vk == VK_NUMPAD4) {
-          pressKey(VK_LEFT);
-        } else if (vk == VK_NUMPAD5) {
-          pressKey('\n'.codeUnits.single);
-        } else if (vk == VK_NUMPAD6) {
-          pressKey(VK_RIGHT);
-        } else if (vk == VK_NUMPAD8) {
-          pressKey(VK_UP);
-        } else {
+        final key = navigationKeys[vk];
+        if (key == null) {
           errorBeep();
+        } else {
+          pressKey(key);
         }
+        break;
       case KeyboardMode.numbers:
         final number = numbers[vk];
         if (number == null) {
@@ -177,11 +178,23 @@ class KeyboardController {
         } else {
           pressKey(number.toString().codeUnits.single);
         }
+        break;
     }
   }
 
   /// Press a key from [vk].
-  void pressKey(final int vk) {}
+  void pressKey(final int vk) {
+    final inputs = malloc.allocate<INPUT>(2);
+    inputs[0]
+      ..type = INPUT_KEYBOARD
+      ..ki.wVk = vk;
+    inputs[1]
+      ..type = INPUT_KEYBOARD
+      ..ki.wVk = vk
+      ..ki.dwFlags = KEYEVENTF_KEYUP;
+    SendInput(2, inputs, sizeOf<INPUT>());
+    malloc.free(inputs);
+  }
 
   /// Beep for an error.
   void errorBeep() {
