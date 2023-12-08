@@ -7,17 +7,24 @@
     "CRCB",
     "dw",
     "ffi",
+    "ghi",
+    "jkl",
     "KEYEVENTF",
     "KEYUP",
     "malloc",
+    "mno",
     "MSG",
     "nullptr",
     "NUMPAD",
+    "pqrs",
+    "recase",
     "Sapi",
     "tolk",
+    "tuv",
     "USEDEFAULT",
     "VK",
     "Wnd",
-    "WS"
+    "WS",
+    "wxyz"
   ]
 }

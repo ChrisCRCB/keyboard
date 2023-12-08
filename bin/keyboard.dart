@@ -21,18 +21,10 @@ void main() {
     nullptr,
   );
   final messagePointer = calloc<MSG>();
+  final keyboardController = KeyboardController(tolk: tolk);
 
   void shutdown() {
-    for (final id in [
-      moveUpId,
-      moveDownId,
-      moveLeftId,
-      moveRightId,
-      sendId,
-      quitId,
-    ]) {
-      UnregisterHotKey(hWnd, id);
-    }
+    keyboardController.unregisterHotkeys(hWnd);
     DestroyWindow(hWnd);
     calloc.free(messagePointer);
     tolk.unload();
@@ -43,12 +35,7 @@ void main() {
       ..load()
       ..trySapi = true;
     ShowWindow(hWnd, SW_MAXIMIZE);
-    RegisterHotKey(hWnd, moveUpId, 0, moveUpKey);
-    RegisterHotKey(hWnd, moveDownId, 0, moveDownKey);
-    RegisterHotKey(hWnd, moveLeftId, 0, moveLeftKey);
-    RegisterHotKey(hWnd, moveRightId, 0, moveRightKey);
-    RegisterHotKey(hWnd, sendId, 0, sendKey);
-    RegisterHotKey(hWnd, quitId, 0, quitKey);
+    keyboardController.registerHotkeys(hWnd);
     tolk.output('Keyboard ready.');
     int returnValue;
     do {
@@ -60,11 +47,11 @@ void main() {
       final msg = messagePointer.ref;
       if (msg.message == WM_HOTKEY) {
         final id = msg.wParam;
-        if (id == quitId) {
-          tolk.output('Goodbye.');
+        try {
+          keyboardController.handleKeyId(id);
+        } on QuitProgram {
+          tolk.output('Exiting program.');
           break;
-        } else {
-          throw StateError('Unhandled ID: $id.');
         }
       }
       TranslateMessage(messagePointer);

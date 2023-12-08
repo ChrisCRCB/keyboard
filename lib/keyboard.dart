@@ -1,3 +1,7 @@
 library keyboard;
 
-export 'src/constants.dart';
+export 'src/exceptions.dart';
+export 'src/keyboard/keyboard_controller.dart';
+export 'src/keyboard/keyboard_key.dart';
+export 'src/keyboard/keyboard_mode.dart';
+export 'src/keyboard/numbers.dart';
